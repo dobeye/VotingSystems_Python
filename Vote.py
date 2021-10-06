@@ -26,4 +26,3 @@ class Vote:
 
     def get_ballot_length(self):
         return self.vote_length
-
