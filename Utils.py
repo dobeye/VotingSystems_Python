@@ -1,7 +1,6 @@
 import Generator
 import main
-from VotingSystems.ElectionMethods import FPTP, AntiPlurality, Approval, Borda, BordaNauru, Bucklin, ElectionMethods, \
-    Coombs, GellerIRV, InstantRunoff, MajorityJudgement, Nanson
+import ElectionMethods
 
 
 def print_tdl(tdl):
@@ -46,43 +45,44 @@ def print_winner_only_election(winner):
 def print_randomly_generated_election(votes):
     vote_array = Generator.generate_random_vote_array(votes)
     print("\nFirst Past The Post voting \n")
-    print_vote_based_election(FPTP.run_fptp_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_fptp_election(vote_array))
     print("\nAnti Plurality voting\n")
-    print_vote_based_election(AntiPlurality.run_anti_plurality_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_anti_plurality_election(vote_array))
     print("\nApproval voting \n")
-    print_vote_based_election(Approval.run_approval_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_approval_election(vote_array))
     print("\nBorda voting \n")
-    print_vote_based_election(Borda.run_borda_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_borda_election(vote_array))
     print("\nBorda Nauru voting \n")
-    print_percentage_election(BordaNauru.run_nauru_election(vote_array))
+    print_percentage_election(ElectionMethods.ScoreBasedElectionMethods.run_nauru_election(vote_array))
     print("\nNanson voting \n")
-    print_vote_based_election(Nanson.run_nanson_election(vote_array))
+    print_vote_based_election(ElectionMethods.RunoffElectionMethods.run_nanson_election(vote_array))
     print("\nCoombs rule voting \n")
-    print_vote_based_election(Coombs.run_coombs_election(vote_array))
+    print_vote_based_election(ElectionMethods.RunoffElectionMethods.run_coombs_election(vote_array))
     print("\nInstant Runoff voting \n")
-    print_vote_based_election(InstantRunoff.run_instant_runoff_election(vote_array))
+    print_vote_based_election(ElectionMethods.RunoffElectionMethods.run_instant_runoff_election(vote_array))
     print("\nGeller Instant Runoff voting\n")
-    print_vote_based_election(GellerIRV.run_geller_irv_election(vote_array))
+    print_vote_based_election(ElectionMethods.RunoffElectionMethods.run_geller_irv_election(vote_array))
     print("\nBucklin voting \n")
-    print_vote_based_election(Bucklin.run_bucklin_election(vote_array))
+    print_vote_based_election(ElectionMethods.AlternativeElectionMethods.run_bucklin_election(vote_array))
     print("\nCopeland voting \n")
-    print_percentage_election(ElectionMethods.run_alternative_copeland_election(vote_array))
+    print_percentage_election(ElectionMethods.ScoreBasedElectionMethods.run_copeland_election(vote_array))
     print("\nSequential Pairwise voting \n")
-    print_permutation_election(ElectionMethods.run_permutation_sequential_pairwise_election(vote_array))
+    print_permutation_election(
+        ElectionMethods.PermutationElectionMethods.run_permutation_sequential_pairwise_election(vote_array))
     print("\nMin Max win voting \n")
-    print_vote_based_election(ElectionMethods.run_min_max_winning_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_min_max_winning_election(vote_array))
     print("\nMin Max margin voting \n")
-    print_vote_based_election(ElectionMethods.run_min_max_margin_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_min_max_margin_election(vote_array))
     print("\nSchulze voting \n")
-    print_vote_based_election(ElectionMethods.run_schulze_election(vote_array))
+    print_permutation_election(ElectionMethods.PermutationElectionMethods.run_schulze_election(vote_array))
     print("\nRanked Pairs election\n")
-    print_permutation_election(ElectionMethods.run_ranked_pairs_election(vote_array))
+    print_permutation_election(ElectionMethods.PermutationElectionMethods.run_ranked_pairs_election(vote_array))
     print("\nKemeny Young voting \n")
-    print_permutation_election(ElectionMethods.run_kemeny_young_election(vote_array))
+    print_permutation_election(ElectionMethods.PermutationElectionMethods.run_kemeny_young_election(vote_array))
     print("\nMajority Judgement voting\n")
-    print_vote_based_election(MajorityJudgement.run_majority_judgement_election(vote_array))
+    print_vote_based_election(ElectionMethods.ScoreBasedElectionMethods.run_majority_judgement_election(vote_array))
     print("\nAlternative Tideman voting\n")
-    print_permutation_election(ElectionMethods.run_alternative_tideman_election(vote_array))
+    print_permutation_election(ElectionMethods.AlternativeElectionMethods.run_alternative_tideman_election(vote_array))
 
 
 def fptp_pseudo_vote(vote_array, candidate_list):
@@ -101,6 +101,12 @@ def fptp_pseudo_vote(vote_array, candidate_list):
             if candidate_list[vote.get_ballot_at(i)].get_validity():
                 candidate_list[vote.get_ballot_at(i)].add_support(1)
                 break
+
+
+def borda_count(vote_array, candidate_list):
+    for vote in vote_array:
+        for placement, support in enumerate(vote.get_ballot()):
+            candidate_list[support].add_support(main.candidate_num - placement)
 
 
 def last_place_invalidation(candidate_list):
@@ -164,7 +170,8 @@ def adjacency_cycle_check(unbeatable, candidate, adjacency_matrix, path, layer):
         if any([n[0] == candidate and n[1] == opponent for n in path]):
             return -1
         if support != 0:
-            recursion_variable = adjacency_cycle_check(unbeatable, opponent, adjacency_matrix, path + [[candidate, opponent, support]], layer + 1)
+            recursion_variable = adjacency_cycle_check(unbeatable, opponent, adjacency_matrix,
+                                                       path + [[candidate, opponent, support]], layer + 1)
             if recursion_variable != -1:
                 return recursion_variable
     return -1
@@ -197,3 +204,12 @@ def smith_set_in_adjacency_matrix(adjacency_matrix):
         ret += added_ret
 
     return ret
+
+
+def election_results_curve(candidate_list):
+    curve = 0
+    for candidate in candidate_list:
+        if candidate.get_support() < curve:
+            curve = candidate.get_support()
+    for candidate in candidate_list:
+        candidate.add_support(-curve)
