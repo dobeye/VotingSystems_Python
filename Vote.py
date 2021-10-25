@@ -2,13 +2,16 @@ import main
 
 
 class Vote:
-    def __init__(self, support_arr, hated_candidate=-1):
+    def __init__(self, support_arr, hated_candidate=None):
         self.support_arr = support_arr
         self.vote_length = len(support_arr)
         if self.vote_length == len(main.candidate_names):
             self.hated_candidate = support_arr[-1]
         else:
             self.hated_candidate = hated_candidate
+
+    def __str__(self):
+        return str(self.support_arr)
 
     def get_ballot(self):
         return self.support_arr
