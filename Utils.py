@@ -1,3 +1,4 @@
+import Election
 import Generator
 import main
 import ElectionMethods
@@ -46,7 +47,7 @@ class PrintUtilities:
         print("winner: " + winner)
 
     @staticmethod
-    def print_randomly_generated_election(vote_array, random=True):
+    def print_randomly_generated_election_by_method(vote_array, random=True):
         if random:
             vote_array = Generator.generate_random_vote_array(vote_array)
         print("\nFirst Past The Post voting \n")
@@ -93,6 +94,42 @@ class PrintUtilities:
         PrintUtilities.print_percentage_election(ElectionMethods.ScoreBasedElectionMethods.run_majority_judgement_election(vote_array, "Central"), 3)
         print("\nAlternative Tideman voting\n")
         PrintUtilities.print_permutation_election(ElectionMethods.AlternativeElectionMethods.run_alternative_tideman_election(vote_array))
+
+    @staticmethod
+    def print_full_election(amount, random=False):
+        if random:
+            vote_array = Generator.generate_random_vote_array(amount)
+        else:
+            candidate_list = Generator.generate_candidate_list()
+            vote_array = Generator.generate_informed_vote_array(amount, candidate_list)
+            print(candidate_list)
+        PrintUtilities.print_election_by_vote_array(vote_array)
+
+    @staticmethod
+    def print_election_by_vote_array(vote_array):
+        Election.FPTP(vote_array).print_election()
+        Election.AntiPlurality(vote_array).print_election()
+        Election.Copeland(vote_array).print_election()
+        Election.Approval(vote_array).print_election()
+        Election.Borda(vote_array).print_election()
+        Election.BordaNauru(vote_array).print_election()
+        Election.MinMax(vote_array).print_election()
+        Election.MinMax(vote_array, "Margin").print_election()
+        Election.MinMax(vote_array, "Pairwise Opposition").print_election()
+        Election.MajorityJudgement(vote_array).print_election()
+        Election.MajorityJudgement(vote_array, "Typical").print_election()
+        Election.MajorityJudgement(vote_array, "Usual").print_election()
+        Election.MajorityJudgement(vote_array, "Central").print_election()
+        Election.InstantRunOff(vote_array).print_election()
+        Election.CoombsRule(vote_array).print_election()
+        Election.BaldwinMethod(vote_array).print_election()
+        Election.NansonMethod(vote_array).print_election()
+        Election.Bucklin(vote_array).print_election()
+        Election.KemenyYoung(vote_array).print_election()
+        Election.RankedPairs(vote_array).print_election()
+        Election.Schulze(vote_array).print_election()
+        Election.SequentialPairwise(vote_array).print_election()
+        Election.AlternativeTideman(vote_array).print_election()
 
 
 def plurality_count(vote_array, candidate_list):

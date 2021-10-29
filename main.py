@@ -1,20 +1,13 @@
-import Election
-import ElectionMethods
-import Generator
 import Utils
 from Candidate import Candidate
 
-candidate_names = ["Trump", "Clinton", "Stein", "Sanders", "Biden", "Buttigieg"]
+candidate_names = ["Trump", "Clinton", "Stein", "Sanders", "Biden", "Buttigieg", "Iddo"]
 candidate_list = [Candidate(y, x) for x, y in enumerate(candidate_names)]
 candidate_num = len(candidate_names)
 
 
 def main():
-    vote_array = Generator.generate_random_vote_array(2000)
-    truth = []
-    for i in range(200):
-        truth.append(Election.AlternativeTideman(vote_array).get_winner().get_index() == ElectionMethods.AlternativeElectionMethods.run_alternative_tideman_election(vote_array)[0])
-    print(all(truth))
+    Utils.PrintUtilities.print_full_election(2000, True)
     """Utils.PrintUtilities.print_randomly_generated_election(vote_array, False)
     print(Election.FPTP(vote_array).get_winner())
     print(Election.AntiPlurality(vote_array).get_winner())

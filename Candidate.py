@@ -1,10 +1,13 @@
 class Candidate:
 
-    def __init__(self, name, index):
+    def __init__(self, name, index, ideology_array=None):
+        if ideology_array is None:
+            ideology_array = [0.5, 0.5]
         self.name = name
         self.index = index
         self.support = 0
         self.placement = 0
+        self.ideology = ideology_array
         self.validity = True
 
     def __eq__(self, other):
@@ -20,13 +23,16 @@ class Candidate:
         return return_string + " Invalid"
 
     def __repr__(self):
-        return str(self.index) + ": " + str(self.support) + " (" + str(self.placement) + ")"
+        return str(self.index) + " [" + str(int(self.ideology[0] * 10 ** 3) / 10 ** 3) + ", " + str(int(self.ideology[1] * 10 ** 3) / 10 ** 3) + "]: " + str(self.support) + " (" + str(self.placement) + ")"
 
     def get_name(self):
         return self.name
 
     def get_index(self):
         return self.index
+
+    def get_ideology(self):
+        return self.ideology
 
     def get_support(self):
         return self.support
@@ -56,9 +62,10 @@ class Candidate:
     def placement_by_support(candidate_list):
         add_variable = 1
         for index, candidate in enumerate(sorted(candidate_list, reverse=True)):
-            candidate.set_placement(index + add_variable)
+            if candidate.get_placement() == 0:
+                candidate.set_placement(index + add_variable)
 
-            for opponent in sorted(candidate_list, reverse=True)[:index]:
-                if candidate == opponent:
-                    candidate.set_placement(opponent.get_placement())
-                    add_variable -= 1
+                for opponent in sorted(candidate_list, reverse=True)[index + 1:]:
+                    if candidate == opponent:
+                        opponent.set_placement(candidate.get_placement())
+                        add_variable -= 1
