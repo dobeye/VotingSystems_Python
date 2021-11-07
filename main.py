@@ -1,45 +1,36 @@
-import Utils
-from Candidate import Candidate
+from Election import *
 
-candidate_names = ["Trump", "Clinton", "Stein", "Sanders", "Biden", "Buttigieg", "Iddo"]
-candidate_list = [Candidate(y, x) for x, y in enumerate(candidate_names)]
+candidate_names = ["Trump", "Clinton", "Stein", "Sanders", "Biden", "Buttigieg", "Iddo", "Cruz"]
 candidate_num = len(candidate_names)
+candidate_ideology = [[0.25, 1.0/3], [0.5, 1.0/3], [0.75, 1.0/3], [0.25, 2.0/3], [0.5, 2.0/3], [0.75, 2.0/3], [1.0/3, 0], [2.0/3, 1]]
 
 
 def main():
-    Utils.PrintUtilities.print_full_election(2000, True)
-    """Utils.PrintUtilities.print_randomly_generated_election(vote_array, False)
-    print(Election.FPTP(vote_array).get_winner())
-    print(Election.AntiPlurality(vote_array).get_winner())
-    print(Election.Copeland(vote_array).get_winner())
-    print(Election.Approval(vote_array).get_winner())
-    print(Election.Borda(vote_array).get_winner())
-    print(Election.BordaNauru(vote_array).get_winner())
-    print(Election.MinMax(vote_array, "Winning").get_winner())
-    print(Election.MinMax(vote_array, "Margin").get_winner())
-    print(Election.MinMax(vote_array, "Pairwise Opposition").get_winner())
-    print(Election.MajorityJudgement(vote_array, "Typical").get_winner())
-    print(Election.MajorityJudgement(vote_array, "Usual").get_winner())
-    print(Election.MajorityJudgement(vote_array, "Central").get_winner())
-    print(Election.InstantRunOff(vote_array).get_winner())
-    print(Election.CoombsRule(vote_array).get_winner())
-    print(Election.BaldwinMethod(vote_array).get_winner())
-    print(Election.NansonMethod(vote_array).get_winner())
-    print(Election.KemenyYoung(vote_array).get_winner())
-    print(Election.RankedPairs(vote_array).get_winner())
-    print(Election.Schulze(vote_array).get_winner())
-    print(Election.SequentialPairwise(vote_array).get_winner())"""
-    """truth = []
-    for i in range(200):
-        vote_array = Generator.generate_random_vote_array(2000)
-        copeland_list = ElectionMethods.ScoreBasedElectionMethods.run_copeland_election(vote_array)
-        if max(copeland_list).get_support() == 5:
-            nanson_list = ElectionMethods.RunoffElectionMethods.run_nanson_election(vote_array)
-            truth.append(max(nanson_list).get_index() == max(copeland_list).get_index())
-            if not truth[-1]:
-                print("problem", Utils.PrintUtilities.print_vote_based_election(nanson_list), i, Utils.PrintUtilities.print_vote_based_election(copeland_list))
+    candidate_generation_method = Utils.input_validation(["default", "custom", "random"], str, 'Election simulator initiated. choose default, custom, or random candidate array by writing default, custom, or random\n')
+
+    if candidate_generation_method == "custom":
+        main.candidate_names = []
+        main.candidate_ideology = []
+        while True:
+            candidate_name = input("input candidate name\n")
+            candidate_ideology_x = Utils.input_validation([0, 1], float, "input candidate ideology x axis (between 0 and 1)\n")
+            candidate_ideology_y = Utils.input_validation([0, 1], float, "input candidate ideology y axis (between 0 and 1)\n")
+            accepted = Utils.input_validation(["yes", "no"], str, ("is " + candidate_name + " [" + str(candidate_ideology_x) + ", " + str(candidate_ideology_y) + "] your desired candidate? (answer yes or no)\n"))
+
+            if accepted == "no":
+                continue
+            main.candidate_names.append(candidate_name)
+            main.candidate_ideology.append([float(candidate_ideology_y), float(candidate_ideology_y)])
+            accepted = Utils.input_validation(["yes", "no"], str, (str(main.candidate_names) + " is that your entire candidate list? (answer yes or no)\n"))
+            if accepted == "yes":
+                main.candidate_num = len(candidate_names)
                 break
-    print(all(truth))"""
+    if candidate_generation_method == "random":
+        main.candidate_ideology = None
+    candidate_list = Generator.generate_candidate_list(candidate_ideology)
+    voter_amount = Utils.input_validation([0, 1000000000000], int, "Choose voter amount\n")
+    all_elections = AllTypeElection(Generator.generate_informed_vote_array(voter_amount, candidate_list), candidate_list)
+    all_elections.print_all_elections()
 
 
 if __name__ == "__main__":

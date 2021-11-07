@@ -1,6 +1,6 @@
 class Candidate:
 
-    def __init__(self, name, index, ideology_array=None):
+    def __init__(self, name, index, ideology_array):
         if ideology_array is None:
             ideology_array = [0.5, 0.5]
         self.name = name
@@ -18,13 +18,14 @@ class Candidate:
 
     def __str__(self):
         return_string = self.name + "(" + str(self.index) + ") support: " + str(self.support) + " placement: " + str(self.placement)
-        if self.validity:
-            return return_string
-        return return_string + " Invalid"
+        if not self.validity:
+            return_string += " Invalid"
+        return return_string
 
     def __repr__(self):
         return str(self.index) + " [" + str(int(self.ideology[0] * 10 ** 3) / 10 ** 3) + ", " + str(int(self.ideology[1] * 10 ** 3) / 10 ** 3) + "]: " + str(self.support) + " (" + str(self.placement) + ")"
 
+# region candidate get methods
     def get_name(self):
         return self.name
 
@@ -37,20 +38,21 @@ class Candidate:
     def get_support(self):
         return self.support
 
+    def get_validity(self):
+        return self.validity
+
+    def get_placement(self):
+        return self.placement
+# endregion
+
     def set_support(self, support):
         self.support = support
 
     def add_support(self, support):
         self.support += support
 
-    def get_validity(self):
-        return self.validity
-
     def set_validity(self, validity):
         self.validity = validity
-
-    def get_placement(self):
-        return self.placement
 
     def set_placement(self, placement):
         self.placement = placement

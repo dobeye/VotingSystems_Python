@@ -6,6 +6,10 @@ from Candidate import Candidate
 
 
 class Election:
+
+    functional_election = False
+    multi_type = False
+
     def __init__(self, winner):
         self.winner = winner
         if len(winner) == 1:
@@ -55,9 +59,9 @@ class ScoreBased(PlacementElection):
 
 
 class RunOff(PlacementElection):
-    def __init__(self, vote_array, election_type=None):
+    def __init__(self, vote_array, election_type=None, candidate_list=None):
         self.pseudo_result_list = []
-        super().__init__(vote_array, election_type)
+        super().__init__(vote_array, election_type, candidate_list)
 
     def run_entire_election(self, vote_array):
         for i in range(main.candidate_num):
@@ -81,31 +85,38 @@ class RunOff(PlacementElection):
 
 
 class Condorcet(PlacementElection):
-    def __init__(self, vote_array, election_type=None):
-        self.pairwise_support_matrix = Utils.generate_pairwise_support_matrix(vote_array)
-        self.smith_set = Utils.smith_set_in_adjacency_matrix(Utils.generate_adjacency_matrix(vote_array))
-        super().__init__(vote_array, election_type)
+    pass
 
 
 # region Score based election classes
 class FPTP(ScoreBased):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for vote in vote_array:
-            self.candidate_list[vote.get_ballot_at(0)].add_support(1)
+            if vote.check_validity_at(0):
+                self.candidate_list[vote.get_ballot_at(0)].add_support(1)
         super().run_election(vote_array)
 
 
 class AntiPlurality(ScoreBased):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for vote in vote_array:
-            if vote.get_hated_candidate() != -1:
+            if vote.get_hated_candidate() is not None:
                 self.candidate_list[vote.get_hated_candidate()].add_support(-1)
 
         Utils.election_results_curve(self.candidate_list)
         super().run_election(vote_array)
 
 
-class Copeland(ScoreBased):
+class Copeland(ScoreBased, Condorcet):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for index, candidate in enumerate(self.candidate_list):
             for opponent in self.candidate_list[(index + 1):]:
@@ -123,6 +134,9 @@ class Copeland(ScoreBased):
 
 
 class Approval(ScoreBased):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for vote in vote_array:
             for support in vote.get_ballot():
@@ -131,12 +145,18 @@ class Approval(ScoreBased):
 
 
 class Borda(ScoreBased):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         Utils.borda_count(vote_array, self.candidate_list)
         super().run_election(vote_array)
 
 
 class BordaNauru(ScoreBased):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         Utils.borda_count(vote_array, self.candidate_list, lambda x: 1 / (x + 1))
         super().run_election(vote_array)
@@ -144,13 +164,18 @@ class BordaNauru(ScoreBased):
 
 class MinMax(ScoreBased):
 
-    min_max_methods = {"Winning": (False, (lambda x: (-x[0], -x[1]))), "Margin": (False, (lambda x: (-x[0] + x[1], -x[1] + x[0]))), "Pairwise Opposition": (True, (lambda x: (-x[0], -x[1])))}
+    functional_election = True
+    multi_type = True
+
+    election_methods = {"Winning": (False, (lambda x: (-x[0], -x[1]))),
+                        "Margin": (False, (lambda x: (-x[0] + x[1], -x[1] + x[0]))),
+                        "PairwiseOpposition": (True, (lambda x: (-x[0], -x[1])))}
 
     def run_election(self, vote_array):
         if self.election_type is None:
             self.election_type = "Winning"
 
-        method_tuple = MinMax.min_max_methods[self.election_type]
+        method_tuple = MinMax.election_methods[self.election_type]
 
         for index, candidate in enumerate(self.candidate_list):
             for opponent in self.candidate_list[(index + 1):]:
@@ -168,14 +193,20 @@ class MinMax(ScoreBased):
 
 class MajorityJudgement(ScoreBased):
 
-    majority_judgment_methods = {"Typical": (lambda t: t[0] + t[1] - t[2]),
-                                 "Usual": (lambda t: t[0] + 0.5 * (t[1] - t[2]) / (1 - t[1] - t[2])),
-                                 "Central": (lambda t: t[0] + 0.5 * (t[1] - t[2]) / (t[1] + t[2] + 0.000001))}
+    functional_election = True
+    multi_type = True
+
+    election_methods = {"Standard": None,
+                        "Typical": (lambda t: t[0] + t[1] - t[2]),
+                        "Usual": (lambda t: t[0] + 0.5 * (t[1] - t[2]) / (1 - t[1] - t[2])),
+                        "Central": (lambda t: t[0] + 0.5 * (t[1] - t[2]) / (t[1] + t[2] + 0.000001))}
 
     def run_election(self, vote_array):
         judgement_matrix = Utils.majority_judgement_matrix(vote_array)
-
         if self.election_type is None:
+            self.election_type = "Standard"
+
+        if MajorityJudgement.election_methods[self.election_type] is None:
             while True:
                 median_matrix = [Utils.find_list_median(candidate) for candidate in judgement_matrix]
                 max_median_score = max(median_matrix)
@@ -192,7 +223,7 @@ class MajorityJudgement(ScoreBased):
                         pass
         else:
             for index, candidate in enumerate(self.candidate_list):
-                candidate.set_support(MajorityJudgement.majority_judgment_methods[self.election_type](Utils.mj_median_proponents_opponents(judgement_matrix, index, len(vote_array))))
+                candidate.set_support(MajorityJudgement.election_methods[self.election_type](Utils.mj_median_proponents_opponents(judgement_matrix, index, len(vote_array))))
 
         if self.election_type is not None:
             self.election_type = type(self).__name__ + str(self.election_type)
@@ -202,11 +233,17 @@ class MajorityJudgement(ScoreBased):
 
 # region Runoff election classes
 class InstantRunOff(RunOff):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         Utils.plurality_count(vote_array, self.candidate_list)
 
 
 class CoombsRule(RunOff):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for candidate in self.candidate_list:
             candidate.set_support(0)
@@ -216,11 +253,17 @@ class CoombsRule(RunOff):
 
 
 class BaldwinMethod(RunOff):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         Utils.borda_count(vote_array, self.candidate_list)
 
 
 class NansonMethod(RunOff):
+
+    functional_election = True
+
     def run_entire_election(self, vote_array):
         round_number = 0
 
@@ -238,6 +281,9 @@ class NansonMethod(RunOff):
 
 
 class Bucklin(RunOff, ScoreBased):
+
+    functional_election = True
+
     def run_entire_election(self, vote_array):
         for i in range(main.candidate_num):
             for vote in vote_array:
@@ -256,6 +302,9 @@ class Bucklin(RunOff, ScoreBased):
 
 
 class AlternativeTideman(RunOff, Condorcet):
+
+    functional_election = True
+
     def run_entire_election(self, vote_array):
         for v in range(main.candidate_num):
             while True:
@@ -290,6 +339,9 @@ class AlternativeTideman(RunOff, Condorcet):
 
 # region Condorcet election classes
 class KemenyYoung(Condorcet):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         pairwise_support_matrix = Utils.generate_pairwise_support_matrix(vote_array)
 
@@ -312,6 +364,9 @@ class KemenyYoung(Condorcet):
 
 
 class RankedPairs(Condorcet):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for v in range(main.candidate_num):
             pairwise_support_matrix = Utils.generate_pairwise_support_matrix(vote_array, self.candidate_list)
@@ -332,6 +387,9 @@ class RankedPairs(Condorcet):
 
 
 class Schulze(Condorcet):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         candidate_list = list(range(main.candidate_num))
         for candidate in self.candidate_list:
@@ -355,6 +413,9 @@ class Schulze(Condorcet):
 
 
 class SequentialPairwise(Condorcet):
+
+    functional_election = True
+
     def run_election(self, vote_array):
         for i in range(main.candidate_num):
             contender = 0
@@ -366,3 +427,54 @@ class SequentialPairwise(Condorcet):
             self.candidate_list[contender].set_placement(i + 1)
             self.candidate_list[contender].set_validity(False)
 # endregion
+
+
+class AllTypeElection:
+    def __init__(self, vote_array, candidate_list=None):
+        self.election_dict = {}
+        for election_type in Utils.get_all_subclasses(Election):
+            if election_type.functional_election:
+                if election_type.__name__ not in self.election_dict:
+                    if election_type.multi_type:
+                        for election_method in election_type.election_methods:
+                            self.election_dict[election_type.__name__ + election_method] = election_type(vote_array, election_method, candidate_list)
+                    else:
+                        self.election_dict[election_type.__name__] = election_type(vote_array, candidate_list=candidate_list)
+
+        self.adjacency_matrix = Utils.generate_adjacency_matrix(vote_array, binary=True)
+        self.smith_set = Utils.smith_set_in_adjacency_matrix(self.adjacency_matrix)
+        if len(self.smith_set) == 1:
+            self.condorcet_winner = self.smith_set[0]
+        else:
+            self.condorcet_winner = None
+
+    def get_election(self, election):
+        if election in self.election_dict:
+            return self.election_dict[election]
+        else:
+            raise Exception("IncorrectInput")
+
+    def print_winner_by_election(self):
+        for i in self.election_dict:
+            print("\n" + i + "\n")
+            if type(self.election_dict[i].get_winner()) == list:
+                for j in self.election_dict[i].get_winner():
+                    print(j)
+            else:
+                print(self.election_dict[i].get_winner())
+
+    def print_wins_per_candidate(self):
+        wins = [0 for _ in range(main.candidate_num)]
+        for i in self.election_dict.values():
+            if type(i.get_winner()) == list:
+                for j in i.get_winner():
+                    wins[j.get_index()] += 1
+            else:
+                wins[i.get_winner().get_index()] += 1
+
+        for index, candidate in enumerate(main.candidate_names):
+            print(candidate, wins[index])
+
+    def print_all_elections(self):
+        for election in self.election_dict.values():
+            election.print_election()
