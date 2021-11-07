@@ -1,4 +1,4 @@
-import main
+from Candidate import Candidate
 
 
 class Vote:
@@ -6,7 +6,7 @@ class Vote:
         self.support_arr = support_arr
         self.vote_length = len(support_arr)
         self.ideology = ideology_array
-        if self.vote_length == len(main.candidate_names):
+        if self.vote_length == Candidate.candidate_num:
             self.hated_candidate = support_arr[-1]
         else:
             self.hated_candidate = hated_candidate

@@ -1,5 +1,10 @@
 class Candidate:
 
+    candidate_names = ["Trump", "Clinton", "Stein", "Sanders", "Biden", "Buttigieg", "Iddo", "Cruz"]
+    candidate_num = len(candidate_names)
+    candidate_ideology = [[0.25, 1.0 / 3], [0.5, 1.0 / 3], [0.75, 1.0 / 3], [0.25, 2.0 / 3], [0.5, 2.0 / 3],
+                          [0.75, 2.0 / 3], [1.0 / 3, 0], [2.0 / 3, 1]]
+
     def __init__(self, name, index, ideology_array):
         if ideology_array is None:
             ideology_array = [0.5, 0.5]

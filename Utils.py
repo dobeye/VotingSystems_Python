@@ -12,7 +12,7 @@ class PrintUtilities:
     @staticmethod
     def print_pairwise_matrix(pm):
         for j, i in enumerate(pm):
-            print(main.candidate_names[j], i, sum(i))
+            print(Candidate.candidate_names[j], i, sum(i))
 
     @staticmethod
     def name_vote_array(vote_array):
@@ -20,7 +20,7 @@ class PrintUtilities:
         for rep, vote in enumerate(vote_array):
             vote_array_with_names.append([])
             for i in vote.get_ballot():
-                vote_array_with_names[rep].append(main.candidate_names[i])
+                vote_array_with_names[rep].append(Candidate.candidate_names[i])
         for vote in vote_array_with_names:
             print(vote, "\n")
 
@@ -42,7 +42,7 @@ class PrintUtilities:
     @staticmethod
     def print_permutation_election(election_results):
         for placement, i in enumerate(election_results):
-            print("#" + str(placement + 1) + ": " + str(main.candidate_names[i]))
+            print("#" + str(placement + 1) + ": " + str(Candidate.candidate_names[i]))
 
     @staticmethod
     def print_winner_only_election(winner):
@@ -67,7 +67,7 @@ def borda_count(vote_array, candidate_list, borda_method=None):
         for support in vote.get_ballot():
             if candidate_list[support].get_validity():
                 if borda_method is None:
-                    candidate_list[support].add_support(main.candidate_num - placement)
+                    candidate_list[support].add_support(len(Candidate.candidate_names) - placement)
                 else:
                     candidate_list[support].add_support(borda_method(placement))
                 placement += 1
@@ -95,9 +95,9 @@ def pairwise_comparison(vote_array, candidate, opponent, validity_chart=None):
 
 
 def generate_adjacency_matrix(vote_array, candidate_list=None, binary=False):
-    adjacency_matrix = [[0 for _ in range(main.candidate_num)] for _ in range(main.candidate_num)]
-    for i in range(main.candidate_num):
-        for j in range(i + 1, main.candidate_num):
+    adjacency_matrix = [[0 for _ in range(Candidate.candidate_num)] for _ in range(Candidate.candidate_num)]
+    for i in range(Candidate.candidate_num):
+        for j in range(i + 1, Candidate.candidate_num):
             temp_array = pairwise_comparison(vote_array, i, j, candidate_list)
 
             if temp_array[0] > temp_array[1]:
@@ -115,9 +115,9 @@ def generate_adjacency_matrix(vote_array, candidate_list=None, binary=False):
 
 
 def generate_pairwise_support_matrix(vote_array, candidate_list=None):
-    adjacency_matrix = [[0 for _ in range(main.candidate_num)] for _ in range(main.candidate_num)]
-    for i in range(main.candidate_num):
-        for j in range(i + 1, main.candidate_num):
+    adjacency_matrix = [[0 for _ in range(Candidate.candidate_num)] for _ in range(Candidate.candidate_num)]
+    for i in range(Candidate.candidate_num):
+        for j in range(i + 1, Candidate.candidate_num):
             temp_array = pairwise_comparison(vote_array, i, j, candidate_list)
             adjacency_matrix[i][j] = temp_array[0]
             adjacency_matrix[j][i] = temp_array[1]
@@ -125,17 +125,19 @@ def generate_pairwise_support_matrix(vote_array, candidate_list=None):
     return adjacency_matrix
 
 
-def pairwise_support_cycle_check(unbeatable, candidate, pairwise_support_matrix, path, layer):
+def pairwise_support_cycle_check(unbeatable, candidate, pairwise_support_matrix, path=None):
+    if path is None:
+        path = []
     if pairwise_support_matrix[candidate][unbeatable] > pairwise_support_matrix[unbeatable][candidate]:
-        return min(path, key=lambda x: x[2])
-    if all([pairwise_support_matrix[candidate][x] <= pairwise_support_matrix[x][candidate] for x in range(main.candidate_num)]):
+        return path + [[candidate, unbeatable, pairwise_support_matrix[candidate][unbeatable] - pairwise_support_matrix[unbeatable][candidate]]]
+    if all([pairwise_support_matrix[candidate][x] <= pairwise_support_matrix[x][candidate] for x in range(Candidate.candidate_num)]):
         return -1
 
-    for opponent in range(main.candidate_num):
+    for opponent in range(Candidate.candidate_num):
         if any([n[0] == candidate and n[1] == opponent for n in path]):
             return -1
         if pairwise_support_matrix[candidate][opponent] > pairwise_support_matrix[opponent][candidate]:
-            recursion_variable = pairwise_support_cycle_check(unbeatable, opponent, pairwise_support_matrix, path + [[candidate, opponent, pairwise_support_matrix[candidate][opponent]]], layer + 1)
+            recursion_variable = pairwise_support_cycle_check(unbeatable, opponent, pairwise_support_matrix, path + [[candidate, opponent, pairwise_support_matrix[candidate][opponent] - pairwise_support_matrix[opponent][candidate]]])
             if recursion_variable != -1:
                 return recursion_variable
     return -1
@@ -171,15 +173,14 @@ def smith_set_in_adjacency_matrix(adjacency_matrix):
 
 
 def majority_judgement_matrix(vote_array):
-    judgement_matrix = [[] for _ in main.candidate_names]
+    judgement_matrix = [[] for _ in Candidate.candidate_names]
     for vote in vote_array:
         supported_candidates = set()
         for placement, candidate in enumerate(vote.get_ballot()):
-            judgement_matrix[candidate].append(main.candidate_num - placement)
+            judgement_matrix[candidate].append(Candidate.candidate_num - placement)
             supported_candidates.add(candidate)
-        for candidate in set(range(main.candidate_num)) - supported_candidates:
-            # noinspection PyTypeChecker
-            judgement_matrix[candidate].append(0)
+        for candidate in set(range(Candidate.candidate_num)) - supported_candidates:
+            judgement_matrix[candidate] += [0]
 
     return judgement_matrix
 
@@ -210,12 +211,12 @@ def find_list_median(integer_list):
     return 0
 
 
-def get_all_subclasses(cls):
+def get_all_subclasses(class_input):
     all_subclasses = []
 
-    for subclass in cls.__subclasses__():
+    for subclass in class_input.__subclasses__():
         all_subclasses.append(subclass)
-        all_subclasses.extend(get_all_subclasses(subclass))
+        all_subclasses += get_all_subclasses(subclass)
 
     return all_subclasses
 
