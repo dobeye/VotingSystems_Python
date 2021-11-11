@@ -32,7 +32,7 @@ def main():
 
     all_elections.print_all_elections()
     if all_elections.get_condorcet_winner() is not None:
-        print(Candidate.candidate_names[all_elections.get_condorcet_winner()])
+        print("\nThe condorcet winner is: " + Candidate.candidate_names[all_elections.get_condorcet_winner()])
         all_elections.print_all_condorcet_cycles()
     else:
         print("")

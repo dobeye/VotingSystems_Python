@@ -1,4 +1,3 @@
-import main
 from Candidate import Candidate
 
 
@@ -129,7 +128,7 @@ def pairwise_support_cycle_check(unbeatable, candidate, pairwise_support_matrix,
     if path is None:
         path = []
     if pairwise_support_matrix[candidate][unbeatable] > pairwise_support_matrix[unbeatable][candidate]:
-        return path + [[candidate, unbeatable, pairwise_support_matrix[candidate][unbeatable] - pairwise_support_matrix[unbeatable][candidate]]]
+        return path + [(candidate, unbeatable, pairwise_support_matrix[candidate][unbeatable] - pairwise_support_matrix[unbeatable][candidate])]
     if all([pairwise_support_matrix[candidate][x] <= pairwise_support_matrix[x][candidate] for x in range(Candidate.candidate_num)]):
         return -1
 
@@ -137,7 +136,7 @@ def pairwise_support_cycle_check(unbeatable, candidate, pairwise_support_matrix,
         if any([n[0] == candidate and n[1] == opponent for n in path]):
             return -1
         if pairwise_support_matrix[candidate][opponent] > pairwise_support_matrix[opponent][candidate]:
-            recursion_variable = pairwise_support_cycle_check(unbeatable, opponent, pairwise_support_matrix, path + [[candidate, opponent, pairwise_support_matrix[candidate][opponent] - pairwise_support_matrix[opponent][candidate]]])
+            recursion_variable = pairwise_support_cycle_check(unbeatable, opponent, pairwise_support_matrix, path + [(candidate, opponent, pairwise_support_matrix[candidate][opponent] - pairwise_support_matrix[opponent][candidate])])
             if recursion_variable != -1:
                 return recursion_variable
     return -1
@@ -225,9 +224,13 @@ def input_validation(accepted_inputs, input_type, input_prompt):
     while True:
         ret = input(input_prompt)
         if input_type is str:
+            alt_inputs = [x[0] for x in accepted_inputs]
             if ret not in accepted_inputs:
-                print("not a valid input\n")
-                continue
+                if ret not in alt_inputs:
+                    print("not a valid input\n")
+                    continue
+                else:
+                    return accepted_inputs[alt_inputs.index(ret)]
             return ret
 
         elif input_type is int:

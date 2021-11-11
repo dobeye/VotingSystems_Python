@@ -1,7 +1,6 @@
 import random
 from random import randrange
 
-import main
 from Candidate import Candidate
 from Vote import Vote
 
