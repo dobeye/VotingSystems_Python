@@ -14,19 +14,24 @@ class Vote:
     def __repr__(self):
         return str(self.ideology) + ": " + str(self.support_arr) + " (" + str(self.hated_candidate) + ")"
 
-    def get_ballot(self):
+# region properties
+    @property
+    def ballot(self):
         return self.support_arr
+
+    @property
+    def size(self):
+        return self.vote_length
+
+    @property
+    def hated(self):
+        return self.hated_candidate
+# endregion
+
+    def check_validity_at(self, pos):
+        return self.vote_length > pos
 
     def get_ballot_at(self, pos):
         if pos >= self.vote_length:
             return -1
         return self.support_arr[pos]
-
-    def get_hated_candidate(self):
-        return self.hated_candidate
-
-    def check_validity_at(self, pos):
-        return self.vote_length > pos
-
-    def get_ballot_length(self):
-        return self.vote_length

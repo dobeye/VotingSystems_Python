@@ -26,12 +26,12 @@ class PlacementElection(Election):
         self.election_type = election_type
 
         self.run_entire_election(vote_array)
-        self.placement_list = sorted(self.candidate_list, key=lambda x: x.get_placement())
+        self.placement_list = sorted(self.candidate_list, key=lambda x: x.place)
 
         if self.election_type is None:
             self.election_type = type(self).__name__
 
-        super().__init__([candidate for candidate in self.placement_list if candidate.get_placement() == 1])
+        super().__init__([candidate for candidate in self.placement_list if candidate.place == 1])
 
     # region dummy methods
     def run_election(self, vote_array):
@@ -44,7 +44,7 @@ class PlacementElection(Election):
     def print_election(self):
         print("\n" + self.election_type + "\n")
         for candidate in self.placement_list:
-            print(str(candidate.get_placement()) + ": " + candidate.get_name())
+            print(str(candidate.place) + ": " + candidate.name)
 
 
 class ScoreBased(PlacementElection):
@@ -54,7 +54,7 @@ class ScoreBased(PlacementElection):
     def print_election(self):
         print("\n" + self.election_type + "\n")
         for candidate in self.placement_list:
-            print(str(candidate.get_placement()) + ": " + candidate.get_name() + " - " + str(candidate.get_support()))
+            print(str(candidate.place) + ": " + candidate.name + " - " + str(candidate.supporters))
 
 
 class RunOff(PlacementElection):
@@ -67,16 +67,16 @@ class RunOff(PlacementElection):
             self.run_election(vote_array)
             self.add_runoff_step(i)
 
-            min([x for x in self.candidate_list if x.get_validity()]).set_validity(False)
+            min([x for x in self.candidate_list if x.exists]).set_validity(False)
             for candidate in self.candidate_list:
-                if not candidate.get_validity():
+                if not candidate.exists:
                     candidate.demote_placement(1)
 
     def add_runoff_step(self, i):
         self.pseudo_result_list.append(
-            self.RunOffStep([deepcopy(x) for x in self.candidate_list if not x.get_validity()],
-                            [deepcopy(x) for x in self.candidate_list if x.get_validity()],
-                            min([deepcopy(x) for x in self.candidate_list if x.get_validity()]),
+            self.RunOffStep([deepcopy(x) for x in self.candidate_list if not x.exists],
+                            [deepcopy(x) for x in self.candidate_list if x.exists],
+                            min([deepcopy(x) for x in self.candidate_list if x.exists]),
                             i))
 
     def print_runoff_steps(self):
@@ -92,10 +92,10 @@ class RunOff(PlacementElection):
             self.round_number = round_number
 
         def print_valid_candidates(self):
-            for first, candidate in enumerate(sorted(self.candidate_list, key=lambda x: x.get_support(), reverse=True)):
+            for first, candidate in enumerate(sorted(self.candidate_list, key=lambda x: x.supporters, reverse=True)):
                 if first > 0:
                     print(", ", end="")
-                print(candidate.get_name() + ": " + str(candidate.get_support()), end="")
+                print(candidate.name + ": " + str(candidate.supporters), end="")
 
 
 class Condorcet(PlacementElection):
@@ -120,8 +120,8 @@ class AntiPlurality(ScoreBased):
 
     def run_election(self, vote_array):
         for vote in vote_array:
-            if vote.get_hated_candidate() is not None:
-                self.candidate_list[vote.get_hated_candidate()].add_support(-1)
+            if vote.hated is not None:
+                self.candidate_list[vote.hated].add_support(-1)
 
         Utils.election_results_curve(self.candidate_list)
         super().run_election(vote_array)
@@ -134,7 +134,7 @@ class Copeland(ScoreBased, Condorcet):
     def run_election(self, vote_array):
         for index, candidate in enumerate(self.candidate_list):
             for opponent in self.candidate_list[(index + 1):]:
-                temp_array = Utils.pairwise_comparison(vote_array, candidate.get_index(), opponent.get_index())
+                temp_array = Utils.pairwise_comparison(vote_array, candidate.number, opponent.number)
 
                 if temp_array[0] > temp_array[1]:
                     candidate.add_support(1)
@@ -153,7 +153,7 @@ class Approval(ScoreBased):
 
     def run_election(self, vote_array):
         for vote in vote_array:
-            for support in vote.get_ballot():
+            for support in vote.ballot:
                 self.candidate_list[support].add_support(1)
         super().run_election(vote_array)
 
@@ -193,12 +193,12 @@ class MinMax(ScoreBased):
 
         for index, candidate in enumerate(self.candidate_list):
             for opponent in self.candidate_list[(index + 1):]:
-                temp_array = Utils.pairwise_comparison(vote_array, candidate.get_index(), opponent.get_index())
+                temp_array = Utils.pairwise_comparison(vote_array, candidate.number, opponent.number)
 
                 if temp_array[0] > temp_array[1] or method_tuple[0]:
-                    opponent.set_support(min(opponent.get_support(), method_tuple[1](temp_array)[0]))
+                    opponent.set_support(min(opponent.supporters, method_tuple[1](temp_array)[0]))
                 if temp_array[1] > temp_array[0] or method_tuple[0]:
-                    candidate.set_support(min(candidate.get_support(), method_tuple[1](temp_array)[1]))
+                    candidate.set_support(min(candidate.supporters, method_tuple[1](temp_array)[1]))
 
         Utils.election_results_curve(self.candidate_list)
         self.election_type = type(self).__name__ + self.election_type
@@ -262,7 +262,7 @@ class CoombsRule(RunOff):
         for candidate in self.candidate_list:
             candidate.set_support(0)
             for vote in vote_array:
-                if all([candidate.get_index() != x for x in vote.get_ballot()[:(Candidate.candidate_num - 1)]]):
+                if all([candidate.number != x for x in vote.ballot[:(Candidate.candidate_num - 1)]]):
                     candidate.add_support(-1)
 
 
@@ -281,22 +281,22 @@ class NansonMethod(RunOff):
     def run_entire_election(self, vote_array):
         round_number = 0
 
-        while any([x.get_validity() for x in self.candidate_list]):
+        while any([x.exists for x in self.candidate_list]):
             Utils.borda_count(vote_array, self.candidate_list)
-            counted_votes = sum([candidate.get_support() for candidate in self.candidate_list])
+            counted_votes = sum([candidate.supporters for candidate in self.candidate_list])
             valid_amount = 0
             for candidate in self.candidate_list:
-                if candidate.get_validity():
+                if candidate.exists:
                     valid_amount += 1
-            self.pseudo_result_list.append(self.RunOffStep([deepcopy(x) for x in self.candidate_list if not x.get_validity()],
-                                                           [deepcopy(x) for x in self.candidate_list if x.get_validity()],
-                                                           [deepcopy(x) for x in self.candidate_list if x.get_support() <= counted_votes / valid_amount],
+            self.pseudo_result_list.append(self.RunOffStep([deepcopy(x) for x in self.candidate_list if not x.exists],
+                                                           [deepcopy(x) for x in self.candidate_list if x.exists],
+                                                           [deepcopy(x) for x in self.candidate_list if x.supporters <= counted_votes / valid_amount],
                                                            round_number))
 
-            for candidate in [x for x in self.candidate_list if x.get_support() <= counted_votes / valid_amount]:
+            for candidate in [x for x in self.candidate_list if x.supporters <= counted_votes / valid_amount]:
                 candidate.set_validity(False)
             for candidate in self.candidate_list:
-                if not candidate.get_validity():
+                if not candidate.exists:
                     candidate.demote_placement(1)
             round_number += 1
 
@@ -312,11 +312,11 @@ class Bucklin(RunOff, ScoreBased):
                     self.candidate_list[vote.get_ballot_at(i)].add_support(1)
 
             self.pseudo_result_list.append(self.RunOffStep(None,
-                                                           [deepcopy(x) for x in self.candidate_list if x.get_validity()],
+                                                           [deepcopy(x) for x in self.candidate_list if x.exists],
                                                            None,
                                                            i))
 
-            if any([x.get_support() > (len(vote_array) / 2) for x in self.candidate_list]):
+            if any([x.supporters > (len(vote_array) / 2) for x in self.candidate_list]):
                 super().run_election(vote_array)
                 return
         super().run_election(vote_array)
@@ -345,10 +345,10 @@ class AlternativeTideman(RunOff, Condorcet):
                 Utils.plurality_count(vote_array, self.candidate_list)
                 self.add_runoff_step(v)
 
-                min([x for x in self.candidate_list if x.get_validity()]).set_validity(False)
+                min([x for x in self.candidate_list if x.exists]).set_validity(False)
 
             for candidate in self.candidate_list:
-                if candidate.get_placement() == 0:
+                if candidate.place == 0:
                     candidate.set_validity(True)
                 else:
                     candidate.set_validity(False)
@@ -413,7 +413,7 @@ class SplitCycle(Condorcet):
                 pairwise_support_matrix[step[0]][step[1]] = pairwise_support_matrix[step[1]][step[0]] = 0
 
             for i in range(Candidate.candidate_num):
-                if self.candidate_list[i].get_validity():
+                if self.candidate_list[i].exists:
                     if all(pairwise_support_matrix[j][i] <= pairwise_support_matrix[i][j] for j in range(Candidate.candidate_num)):
                         self.candidate_list[i].set_placement(v + 1)
                         self.candidate_list[i].set_validity(False)
@@ -444,7 +444,7 @@ class RankedPairs(Condorcet):
                     return_key[largest_win[0]][largest_win[1]] = 0
 
             for j in range(Candidate.candidate_num):
-                if self.candidate_list[j].get_validity():
+                if self.candidate_list[j].exists:
                     if all(return_key[k][j] <= return_key[j][k] for k in range(Candidate.candidate_num)):
                         self.candidate_list[j].set_placement(i + 1)
                         self.candidate_list[j].set_validity(False)
@@ -556,9 +556,9 @@ class AllTypeElection:
         for i in self.election_dict.values():
             if type(i.get_winner()) == list:
                 for j in i.get_winner():
-                    wins[j.get_index()] += 1
+                    wins[j.number] += 1
             else:
-                wins[i.get_winner().get_index()] += 1
+                wins[i.get_winner().number] += 1
 
         for index, candidate in enumerate(Candidate.candidate_names):
             print(candidate, wins[index])

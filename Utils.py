@@ -18,7 +18,7 @@ class PrintUtilities:
         vote_array_with_names = []
         for rep, vote in enumerate(vote_array):
             vote_array_with_names.append([])
-            for i in vote.get_ballot():
+            for i in vote.ballot:
                 vote_array_with_names[rep].append(Candidate.candidate_names[i])
         for vote in vote_array_with_names:
             print(vote, "\n")
@@ -27,16 +27,16 @@ class PrintUtilities:
     def print_vote_based_election(candidate_list):
         candidate_list = sorted(candidate_list, reverse=True)
         for candidate in candidate_list:
-            print(candidate.get_name(), ": ", int(candidate.get_support()))
+            print(candidate.name, ": ", int(candidate.supporters))
 
     @staticmethod
     def print_percentage_election(candidate_list, exactness=2):
         candidate_list = sorted(candidate_list, reverse=True)
         for candidate in candidate_list:
-            if candidate.get_support() == int(candidate.get_support()):
-                print(candidate.get_name(), ": ", int(candidate.get_support()))
+            if candidate.supporters == int(candidate.supporters):
+                print(candidate.name, ": ", int(candidate.supporters))
                 continue
-            print(candidate.get_name(), ": ", int(candidate.get_support() * (10 ** exactness)) / (10 ** exactness))
+            print(candidate.name, ": ", int(candidate.supporters * (10 ** exactness)) / (10 ** exactness))
 
     @staticmethod
     def print_permutation_election(election_results):
@@ -52,8 +52,8 @@ def plurality_count(vote_array, candidate_list):
     for candidate in candidate_list:
         candidate.set_support(0)
     for vote in vote_array:
-        for i in range(vote.get_ballot_length()):
-            if candidate_list[vote.get_ballot_at(i)].get_validity():
+        for i in range(vote.size):
+            if candidate_list[vote.get_ballot_at(i)].exists:
                 candidate_list[vote.get_ballot_at(i)].add_support(1)
                 break
 
@@ -63,8 +63,8 @@ def borda_count(vote_array, candidate_list, borda_method=None):
         candidate.set_support(0)
     for vote in vote_array:
         placement = 0
-        for support in vote.get_ballot():
-            if candidate_list[support].get_validity():
+        for support in vote.ballot:
+            if candidate_list[support].exists:
                 if borda_method is None:
                     candidate_list[support].add_support(len(Candidate.candidate_names) - placement)
                 else:
@@ -75,11 +75,11 @@ def borda_count(vote_array, candidate_list, borda_method=None):
 
 def pairwise_comparison(vote_array, candidate, opponent, validity_chart=None):
     def vote_support_validity(contender):
-        return vote.get_ballot_at(i) == contender and ((validity_chart is None) or (isinstance(validity_chart[0], Candidate) and validity_chart[contender].get_validity()) or (isinstance(validity_chart[0], bool) and validity_chart[contender]))
+        return vote.get_ballot_at(i) == contender and ((validity_chart is None) or (isinstance(validity_chart[0], Candidate) and validity_chart[contender].exists) or (isinstance(validity_chart[0], bool) and validity_chart[contender]))
     ret = [0, 0]
     for vote in vote_array:
         x = None
-        for i in range(vote.get_ballot_length()):
+        for i in range(vote.size):
             if vote_support_validity(candidate):
                 x = 0
             elif vote_support_validity(opponent):
@@ -175,7 +175,7 @@ def majority_judgement_matrix(vote_array):
     judgement_matrix = [[] for _ in Candidate.candidate_names]
     for vote in vote_array:
         supported_candidates = set()
-        for placement, candidate in enumerate(vote.get_ballot()):
+        for placement, candidate in enumerate(vote.ballot):
             judgement_matrix[candidate].append(Candidate.candidate_num - placement)
             supported_candidates.add(candidate)
         for candidate in set(range(Candidate.candidate_num)) - supported_candidates:
@@ -199,7 +199,7 @@ def mj_median_proponents_opponents(judgement_matrix, index, voter_num):
 
 
 def election_results_curve(candidate_list):
-    curve = min([x.get_support() for x in candidate_list])
+    curve = min([x.supporters for x in candidate_list])
     for candidate in candidate_list:
         candidate.add_support(-curve)
 
