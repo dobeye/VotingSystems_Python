@@ -6,6 +6,8 @@ from Vote import Vote
 
 
 def generate_random_vote_array(amount, complete=False):
+    """generates a random amount of votes with complete disregard to candidate ideology, with optional argument
+    to generate only votes that include all candidates in some order for debug purposes"""
     ret = []
     for i in range(amount):
         length = randrange(1, Candidate.candidate_num + 1) if not complete else Candidate.candidate_num
@@ -26,12 +28,16 @@ def generate_random_vote_array(amount, complete=False):
 
 
 def generate_candidate_list(ideology_array=None):
+    """generates either a random list of candidates with randomly selected ideologies, or generates candidates based
+    on inputted ideology list, with every item in the list being a list of a candidates x ideology and y ideology"""
     if ideology_array is not None:
         return [Candidate(y, x, ideology_array[x]) for x, y in enumerate(Candidate.candidate_names)]
     return [Candidate(y, x, [random.random(), random.random()]) for x, y in enumerate(Candidate.candidate_names)]
 
 
 def generate_informed_vote_array(amount, candidate_list):
+    """generates a vote array with regards to voter and candidate ideology, assuming that a voter will only support
+    a candidate less than 0.3 away from them on the ideological map"""
     x_list = [x / amount for x in list(range(0, amount + 1))]
     y_list = [x / amount for x in list(range(0, amount + 1))]
     ret = []

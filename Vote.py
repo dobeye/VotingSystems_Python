@@ -2,6 +2,10 @@ from Candidate import Candidate
 
 
 class Vote:
+
+    """The vote object represents a voter with an ideology (used to generate supported and hated candidates),
+    supported candidates, and a single hated candidate used for anti plurality."""
+
     def __init__(self, support_arr, hated_candidate=None, ideology_array=None):
         self.support_arr = support_arr
         self.vote_length = len(support_arr)

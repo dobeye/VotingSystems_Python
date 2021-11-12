@@ -28,17 +28,41 @@ def main():
     candidate_list = Generator.generate_candidate_list(Candidate.candidate_ideology)
     voter_amount = Utils.input_validation([0, 1000000000000], int, "Choose voter amount\n")
     vote_array = Generator.generate_informed_vote_array(voter_amount, candidate_list) if voter_type == "informed" else Generator.generate_random_vote_array(voter_amount)
-    all_elections = AllTypeElection(vote_array, candidate_list)
 
-    all_elections.print_all_elections()
-    if all_elections.get_condorcet_winner() is not None:
-        print("\nThe condorcet winner is: " + Candidate.candidate_names[all_elections.get_condorcet_winner()])
-        all_elections.print_all_condorcet_cycles()
-    else:
-        print("")
-        all_elections.print_all_condorcet_cycles(True)
-        print("all")
-        all_elections.print_all_condorcet_cycles()
+    all_elections = AllTypeElection(vote_array, candidate_list)
+    print("All elections have been simulated and the results are in!", end=" ")
+
+    while True:
+        analysis_type = Utils.input_validation(["universal", "class", "individual", "exit"], str, "Which analysis type would you like to enter? (answer universal, class, individual, or exit)\n")
+
+        if analysis_type == "exit":
+            break
+        elif analysis_type == "universal":
+            analysis_function = Utils.input_validation(["condorcet winner", "smith cycles", "all cycles", "wins per candidate", "winner by election", "print all elections", "candidate comparison", "exit"], str,
+                                                       "Would you like to see: The condorcet winner, the smith cycles, all pairwise cycles, wins per candidate, the winner of each election, print all elections, candidate comparison, or return to main menu?)\n")
+
+            if analysis_function == "condorcet winner":
+                if all_elections.get_condorcet_winner() is not None:
+                    print(Candidate.candidate_names[all_elections.get_condorcet_winner()])
+                else:
+                    print("no condorcet winner")
+            elif analysis_function == "smith cycles":
+                all_elections.print_all_condorcet_cycles(True)
+            elif analysis_function == "all cycles":
+                all_elections.print_all_condorcet_cycles()
+            elif analysis_function == "wins per candidate":
+                all_elections.print_wins_per_candidate()
+            elif analysis_function == "winner by election":
+                all_elections.print_winner_by_election()
+            elif analysis_function == "print all elections":
+                all_elections.print_all_elections()
+            elif analysis_function == "candidate comparison":
+                candidate1 = Utils.input_validation(Candidate.candidate_names, str, "Enter your first candidate\n")
+                candidate2 = Utils.input_validation(Candidate.candidate_names, str, "Enter your second candidate\n")
+                if candidate1 == candidate2:
+                    print("you can't compare a candidate to themself!")
+                else:
+                    all_elections.print_pairwise_comparison(Candidate.candidate_names.index(candidate1), Candidate.candidate_names.index(candidate2))
 
 
 if __name__ == "__main__":

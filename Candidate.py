@@ -1,4 +1,7 @@
 class Candidate:
+    """ The candidate object represents a candidate in an election, with a name (purely for aesthetic purposes), an index used to identify the candidate,
+            an ideology array which is used when forming an informed voter list by comparing voter ideology to candidate ideology.
+            All candidates start out with no support, no placement, and exist as valid candidates."""
 
     candidate_names = ["Trump", "Clinton", "Stein", "Sanders", "Biden", "Buttigieg", "Iddo", "Cruz"]
     candidate_num = len(candidate_names)
@@ -73,6 +76,9 @@ class Candidate:
 
     @staticmethod
     def placement_by_support(candidate_list):
+        """assign each candidate a placement according to their amount of support.
+        sets each candidate with a current placement their placement according to an index and a changing add variable, and then checks if any other candidates have
+        the same level of support, and if they do their placement is set accordingly and the add variable is edited"""
         add_variable = 1
         for index, candidate in enumerate(sorted(candidate_list, reverse=True)):
             if candidate.place == 0:
