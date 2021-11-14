@@ -1,7 +1,7 @@
 from copy import deepcopy
 import Generator
 import Utils
-from Candidate import Candidate
+from Items import Candidate
 
 
 class Election:
@@ -16,6 +16,10 @@ class Election:
 
     def get_winner(self):
         return self.winner
+
+    @classmethod
+    def is_election(cls):
+        return cls.functional_election
 
 
 class PlacementElection(Election):
@@ -108,9 +112,7 @@ class FPTP(ScoreBased):
     functional_election = True
 
     def run_election(self, vote_array):
-        for vote in vote_array:
-            if vote.check_validity_at(0):
-                self.candidate_list[vote.get_ballot_at(0)].add_support(1)
+        Utils.plurality_count(vote_array, self.candidate_list)
         super().run_election(vote_array)
 
 
@@ -389,14 +391,6 @@ class SplitCycle(Condorcet):
         for v in range(Candidate.candidate_num):
             pairwise_support_matrix = Utils.generate_pairwise_support_matrix(vote_array, self.candidate_list)
 
-            """for i in range(Candidate.candidate_num):
-                while True:
-                    cycle_path = Utils.pairwise_support_cycle_check(i, i, pairwise_support_matrix, [])
-                    if cycle_path == -1:
-                        break
-                    else:
-                        cycle_path = min(cycle_path, key=lambda x: x[2])
-                        pairwise_support_matrix[cycle_path[0]][cycle_path[1]] = pairwise_support_matrix[cycle_path[1]][cycle_path[0]] = 0"""
             split_cycles = set()
             for i in range(Candidate.candidate_num):
                 for j in range(Candidate.candidate_num):
@@ -494,28 +488,39 @@ class SequentialPairwise(Condorcet):
 
 
 class AllTypeElection:
+
+    """The AllTypeElection represents all other elections simulated from the same base vote array, and all vote based
+    traits (E.G. adjacency matrix, the smith set, the condorcet winner). Also includes general vote information such as
+    voter and candidate amount."""
+
     def __init__(self, vote_array, candidate_list):
         self.voter_amount = len(vote_array)
         self.candidate_amount = len(candidate_list)
 
+        self.adjacency_matrix = Utils.generate_adjacency_matrix(vote_array, binary=True)
+        self.pairwise_support_matrix = Utils.generate_pairwise_support_matrix(vote_array)
+
+        self.smith_set = Utils.smith_set_in_adjacency_matrix(self.adjacency_matrix)
+        if len(self.smith_set) == 1:
+            self.condorcet_winner = self.smith_set[0]
+        else:
+            self.condorcet_winner = None
+
+        self.support_by_candidate = [[0 for _ in range(self.candidate_amount)] for _ in range(self.candidate_amount)]
+        for vote in vote_array:
+            for index, support in enumerate(vote.ballot):
+                self.support_by_candidate[support][index] += 1
+
         # election generation
         self.election_dict = {}
         for election_type in Utils.get_all_subclasses(Election):
-            if election_type.functional_election:
+            if election_type.is_election():
                 if election_type.__name__ not in self.election_dict:
                     if election_type.multi_type:
                         for election_method in election_type.election_methods:
                             self.election_dict[election_type.__name__ + election_method] = election_type(vote_array, election_method, candidate_list)
                     else:
                         self.election_dict[election_type.__name__] = election_type(vote_array, candidate_list=candidate_list)
-
-        self.adjacency_matrix = Utils.generate_adjacency_matrix(vote_array, binary=True)
-        self.pairwise_support_matrix = Utils.generate_pairwise_support_matrix(vote_array)
-        self.smith_set = Utils.smith_set_in_adjacency_matrix(self.adjacency_matrix)
-        if len(self.smith_set) == 1:
-            self.condorcet_winner = self.smith_set[0]
-        else:
-            self.condorcet_winner = None
 
         # condorcet cycle generation
         self.condorcet_cycle = []
@@ -540,7 +545,7 @@ class AllTypeElection:
             raise Exception("IncorrectInput")
 
     def get_all_election_names(self):
-        return [x for x in self.election_dict]
+        return list(self.election_dict.keys())
 
     def print_winner_by_election(self):
         for i in self.election_dict:
@@ -585,3 +590,7 @@ class AllTypeElection:
 
     def get_condorcet_winner(self):
         return self.condorcet_winner
+
+    def print_support_per_candidate(self):
+        for index, candidate in Candidate.candidate_names:
+            print(candidate, self.support_by_candidate[index])

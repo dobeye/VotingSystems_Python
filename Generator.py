@@ -1,8 +1,6 @@
 import random
 from random import randrange
-
-from Candidate import Candidate
-from Vote import Vote
+from Items import *
 
 
 def generate_random_vote_array(amount, complete=False):

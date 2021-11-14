@@ -1,4 +1,4 @@
-from Candidate import Candidate
+from Items import Candidate
 
 
 class PrintUtilities:
@@ -22,7 +22,7 @@ class PrintUtilities:
 
 
 def plurality_count(vote_array, candidate_list):
-    """Run basic FPTP election by counting every voters top choice and adding support to the candidate with that index"""
+    """Run basic FPTP election by counting every voters top valid choice and adding support to the candidate with that index"""
     for candidate in candidate_list:
         candidate.set_support(0)
     for vote in vote_array:
@@ -204,13 +204,13 @@ def find_list_median(integer_list):
 
 def get_all_subclasses(class_input):
     """returns all class subclasses (what did you really expect?)"""
-    all_subclasses = []
+    ret = []
 
     for subclass in class_input.__subclasses__():
-        all_subclasses.append(subclass)
-        all_subclasses += get_all_subclasses(subclass)
+        ret.append(subclass)
+        ret += get_all_subclasses(subclass)
 
-    return all_subclasses
+    return ret
 
 
 def input_validation(accepted_inputs, input_type, input_prompt):

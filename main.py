@@ -1,4 +1,7 @@
-from Election import *
+from Election import AllTypeElection
+import Utils
+from Items import Candidate
+import Generator
 
 
 def main():
