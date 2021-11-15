@@ -5,13 +5,17 @@ class PrintUtilities:
 
     @staticmethod
     def print_tdl(tdl):
+
         """print every row in 2d list"""
+
         for i in tdl:
             print(i)
 
     @staticmethod
     def name_vote_array(vote_array):
+
         """prints a vote array with candidate names instead of candidate indices"""
+
         vote_array_with_names = []
         for rep, vote in enumerate(vote_array):
             vote_array_with_names.append([])
@@ -22,9 +26,12 @@ class PrintUtilities:
 
 
 def plurality_count(vote_array, candidate_list):
+
     """Run basic FPTP election by counting every voters top valid choice and adding support to the candidate with that index"""
+
     for candidate in candidate_list:
         candidate.set_support(0)
+
     for vote in vote_array:
         for i in range(vote.size):
             if candidate_list[vote.get_ballot_at(i)].exists:
@@ -33,10 +40,14 @@ def plurality_count(vote_array, candidate_list):
 
 
 def borda_count(vote_array, candidate_list, borda_method=None):
-    """run borda election with optional lambda inputs. gives each candidate a different amount of support depending on their placement in voter ballots.
+
+    """run borda election with optional lambda inputs.
+    gives each candidate a different amount of support depending on their placement in voter ballots.
     Default function is the amount of candidates minus the candidates placement in the ballot"""
+
     for candidate in candidate_list:
         candidate.set_support(0)
+
     for vote in vote_array:
         placement = 0
         for support in vote.ballot:
@@ -50,11 +61,15 @@ def borda_count(vote_array, candidate_list, borda_method=None):
 
 
 def pairwise_comparison(vote_array, candidate, opponent, validity_chart=None):
+
     """returns the amount of ballots ranking the candidate over the opponent and the amount of ballots ranking the opponent over the candidate. Support for
     validity chart which automatically gives invalid candidates a loss"""
+
     def vote_support_validity(contender):
+
         """Checks candidate support in ballot along with candidate validity. Validity chart can come in the form of either True and false list, in which case the function checks
         if the Bool variable at the place of the candidate index is true, or in the form of a candidate list, in which case the function checks that the candidate being checked is valid"""
+
         return vote.get_ballot_at(i) == contender and ((validity_chart is None) or (isinstance(validity_chart[0], Candidate) and validity_chart[contender].exists) or (isinstance(validity_chart[0], bool) and validity_chart[contender]))
     ret = [0, 0]
     for vote in vote_array:
@@ -74,8 +89,11 @@ def pairwise_comparison(vote_array, candidate, opponent, validity_chart=None):
 
 
 def generate_adjacency_matrix(vote_array, candidate_list=None, binary=False):
-    """generates 2d list of every candidates voter support over all other candidates. Optional candidate list argument disqualifies invalid candidates,
+
+    """generates 2d list of every candidates voter support over all other candidates.
+    Optional candidate list argument disqualifies invalid candidates,
     optional binary argument disregards amount of support and labels every win as 1 and every loss as 0"""
+
     adjacency_matrix = [[0 for _ in range(Candidate.candidate_num)] for _ in range(Candidate.candidate_num)]
     for i in range(Candidate.candidate_num):
         for j in range(i + 1, Candidate.candidate_num):
@@ -96,8 +114,10 @@ def generate_adjacency_matrix(vote_array, candidate_list=None, binary=False):
 
 
 def generate_pairwise_support_matrix(vote_array, candidate_list=None):
+
     """returns 2d list of every candidates voter support over every other candidate.
     Optional candidate list argument automatically gives every invalid candidate losses"""
+
     adjacency_matrix = [[0 for _ in range(Candidate.candidate_num)] for _ in range(Candidate.candidate_num)]
     for i in range(Candidate.candidate_num):
         for j in range(i + 1, Candidate.candidate_num):
@@ -109,16 +129,21 @@ def generate_pairwise_support_matrix(vote_array, candidate_list=None):
 
 
 def pairwise_support_cycle_check(unbeatable, candidate, pairwise_support_matrix, path=None):
+
     """recursively checks for a pairwise win cycle, and returns a win path along a pairwise support matrix going in a circle, or returns -1 if no such cycle exists"""
+
     if path is None:
         path = []
     if pairwise_support_matrix[candidate][unbeatable] > pairwise_support_matrix[unbeatable][candidate]:
+        # if the currently checked candidate has beaten the first candidate checked, implying a cycle of pairwise wins
         return path + [(candidate, unbeatable, pairwise_support_matrix[candidate][unbeatable] - pairwise_support_matrix[unbeatable][candidate])]
-    if all([pairwise_support_matrix[candidate][x] <= pairwise_support_matrix[x][candidate] for x in range(Candidate.candidate_num)]):
+    if all([pairwise_support_matrix[candidate][opponent] <= pairwise_support_matrix[opponent][candidate] for opponent in range(Candidate.candidate_num)]):
+        # if the currently checked candidate has beaten no one, implying a dead end
         return -1
 
     for opponent in range(Candidate.candidate_num):
         if any([n[0] == candidate and n[1] == opponent for n in path]):
+            # if this comparison has already been checked in the recursion
             return -1
         if pairwise_support_matrix[candidate][opponent] > pairwise_support_matrix[opponent][candidate]:
             recursion_variable = pairwise_support_cycle_check(unbeatable, opponent, pairwise_support_matrix, path + [(candidate, opponent, pairwise_support_matrix[candidate][opponent] - pairwise_support_matrix[opponent][candidate])])
@@ -128,8 +153,12 @@ def pairwise_support_cycle_check(unbeatable, candidate, pairwise_support_matrix,
 
 
 def smith_set_in_adjacency_matrix(adjacency_matrix):
+
     """returns the smith set in a given adjacency matrix by first adding every candidate with the maximum amount of pairwise wins,
     then adding every candidate who doesn't lose to the existing candidates"""
+
+    # create a list with the number of pairwise wins per winner, meaning if the candidate with index 0 has beaten 5 candidates,
+    # list index 0 would be 5
     copeland_score_list = []
     for i in adjacency_matrix:
         score = 0
@@ -138,12 +167,14 @@ def smith_set_in_adjacency_matrix(adjacency_matrix):
                 score += 1
         copeland_score_list.append(score)
 
+    # append every candidate with the maximal copeland score to the return list
     ret = []
     for i, support in enumerate(copeland_score_list):
         if support == max(copeland_score_list):
             ret.append(i)
 
     while True:
+        # include every candidate not beaten by the candidates in the current return list, until no new candidates are found.
         added_ret = []
         for candidate in ret:
             for index, support in enumerate(adjacency_matrix[candidate]):
@@ -159,7 +190,9 @@ def smith_set_in_adjacency_matrix(adjacency_matrix):
 
 
 def majority_judgement_matrix(vote_array):
+
     """returns a list of every candidates appearances in every voters ballot, 0 meaning they didn't appear in the ballot"""
+
     judgement_matrix = [[] for _ in Candidate.candidate_names]
     for vote in vote_array:
         supported_candidates = set()
@@ -173,7 +206,10 @@ def majority_judgement_matrix(vote_array):
 
 
 def mj_median_proponents_opponents(judgement_matrix, index, voter_num):
-    """returns the majority judgement list median, the percentage of supporters relative to the median, and the percentage of non supporters relative to the median"""
+
+    """returns the majority judgement list median, the percentage of supporters relative to the median,
+    and the percentage of non supporters relative to the median"""
+
     candidate_array = judgement_matrix[index]
     list_median = find_list_median(candidate_array)
     p = q = 0
@@ -188,22 +224,28 @@ def mj_median_proponents_opponents(judgement_matrix, index, voter_num):
 
 
 def election_results_curve(candidate_list):
+
     """grades all candidate support along a curve, so as to not include candidates with negative support,
     since only relative support is measured in elections"""
+
     curve = min([x.supporters for x in candidate_list])
     for candidate in candidate_list:
         candidate.add_support(-curve)
 
 
 def find_list_median(integer_list):
+
     """finds list median (what did you really expect?)"""
+
     if len(integer_list) != 0:
         return sorted(integer_list, reverse=True)[int(len(integer_list) / 2)]
     return 0
 
 
 def get_all_subclasses(class_input):
+
     """returns all class subclasses (what did you really expect?)"""
+
     ret = []
 
     for subclass in class_input.__subclasses__():
@@ -214,9 +256,11 @@ def get_all_subclasses(class_input):
 
 
 def input_validation(accepted_inputs, input_type, input_prompt):
+
     """simplifies getting user input by locking user in while loop until they enter a valid input.
     Valid inputs are defined as inputs included in the valid inputs list in case the valid input is a string,
     or in the valid range if the valid input is an integer/double"""
+
     while True:
         ret = input(input_prompt)
         if input_type is str:
