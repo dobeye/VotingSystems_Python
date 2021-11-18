@@ -22,7 +22,7 @@ class PrintUtilities:
             for i in vote.ballot:
                 vote_array_with_names[rep].append(Candidate.candidate_names[i])
         for vote in vote_array_with_names:
-            print(vote, "\n")
+            print(f"{vote} \n")
 
 
 def plurality_count(vote_array, candidate_list):
@@ -294,3 +294,52 @@ def input_validation(accepted_inputs, input_type, input_prompt):
             except ValueError:
                 print("not a valid input\n")
                 continue
+
+
+def dict_input_validation(valid_input_list, input_type, prompt):
+
+    """(essentially an improved input validation method which uses a dictionary to define valid inputs, and only accepts input indices)
+    simplifies getting user input by locking user in while loop until they enter a valid input.
+        Valid inputs are defined as inputs included in the valid inputs list in case the valid input is a string,
+        or in the valid range if the valid input is an integer/double"""
+
+    print(prompt)
+    if input_type is str:
+        menu_dict = {place + 1: option for place, option in enumerate(valid_input_list)}
+        while True:
+            for i, j in menu_dict.items():
+                print(f"{i}: {j}")
+
+            choice = input()
+            try:
+                return menu_dict[int(choice)]
+            except ValueError:
+                print("not a valid input")
+            except KeyError:
+                print("not a valid option")
+
+    elif input_type is int:
+        while True:
+            print(f"{valid_input_list[0]} - {valid_input_list[1]}")
+
+            choice = input()
+            try:
+                if valid_input_list[0] <= int(choice) <= valid_input_list[1] and float(choice) == int(choice):
+                    return int(choice)
+                else:
+                    raise ValueError
+            except ValueError:
+                print("not a valid input")
+
+    elif input_type is float:
+        while True:
+            print(f"{valid_input_list[0]} -- {valid_input_list[1]}")
+
+            choice = input()
+            try:
+                if valid_input_list[0] <= float(choice) <= valid_input_list[1]:
+                    return float(choice)
+                else:
+                    raise ValueError
+            except ValueError:
+                print("not a valid input")

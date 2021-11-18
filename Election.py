@@ -46,9 +46,9 @@ class PlacementElection(Election):
     # endregion
 
     def print_election(self):
-        print("\n" + self.election_type + "\n")
+        print(f"\n{self.election_type}\n")
         for candidate in self.placement_list:
-            print(str(candidate.place) + ": " + candidate.name)
+            print(f"{candidate.place}: {candidate.name}")
 
 
 class ScoreBased(PlacementElection):
@@ -56,9 +56,9 @@ class ScoreBased(PlacementElection):
         Candidate.placement_by_support(self.candidate_list)
 
     def print_election(self):
-        print("\n" + self.election_type + "\n")
+        print(f"\n{self.election_type}\n")
         for candidate in self.placement_list:
-            print(str(candidate.place) + ": " + candidate.name + " - " + str(candidate.supporters))
+            print(f"{candidate.place}: {candidate.name} - {candidate.supporters}")
 
 
 class RunOff(PlacementElection):
@@ -99,7 +99,7 @@ class RunOff(PlacementElection):
             for first, candidate in enumerate(sorted(self.candidate_list, key=lambda x: x.supporters, reverse=True)):
                 if first > 0:
                     print(", ", end="")
-                print(candidate.name + ": " + str(candidate.supporters), end="")
+                print(f"{candidate.name}: {candidate.supporters}", end="")
 
 
 class Condorcet(PlacementElection):
@@ -539,22 +539,19 @@ class AllTypeElection:
         self.smith_cycle = [cycle for cycle in self.condorcet_cycle if any([win[0] in self.smith_set for win in cycle])]
 
     def get_election(self, election):
-        if election in self.election_dict:
-            return self.election_dict[election]
-        else:
-            raise Exception("IncorrectInput")
+        return self.election_dict[election]
 
     def get_all_election_names(self):
         return list(self.election_dict.keys())
 
     def print_winner_by_election(self):
-        for i in self.election_dict:
-            print("\n" + i + "\n")
-            if type(self.election_dict[i].get_winner()) == list:
-                for j in self.election_dict[i].get_winner():
-                    print(j)
+        for i, k in self.election_dict.items():
+            print(f"\n{i}:\n")
+            if type(k.get_winner()) == list:
+                for j in k.get_winner():
+                    print(j.name)
             else:
-                print(self.election_dict[i].get_winner())
+                print(self.election_dict[i].get_winner().name)
 
     def print_wins_per_candidate(self):
         wins = [0 for _ in range(self.candidate_amount)]
@@ -566,16 +563,17 @@ class AllTypeElection:
                 wins[i.get_winner().number] += 1
 
         for index, candidate in enumerate(Candidate.candidate_names):
-            print(candidate, wins[index])
+            print(f"{candidate} {wins[index]}")
 
     def print_all_elections(self):
         for election in self.election_dict.values():
             election.print_election()
+        print("")
 
     def print_pairwise_comparison(self, candidate, opponent):
-        print(Candidate.candidate_names[candidate] + ": " + str(self.pairwise_support_matrix[candidate][opponent]))
-        print(Candidate.candidate_names[opponent] + ": " + str(self.pairwise_support_matrix[opponent][candidate]))
-        print("Abstain: " + str(self.voter_amount - self.pairwise_support_matrix[candidate][opponent] - self.pairwise_support_matrix[opponent][candidate]))
+        print(f"{Candidate.candidate_names[candidate]}: {self.pairwise_support_matrix[candidate][opponent]}")
+        print(f"{Candidate.candidate_names[opponent]}: {self.pairwise_support_matrix[opponent][candidate]}")
+        print(f"Abstain: {self.voter_amount - self.pairwise_support_matrix[candidate][opponent] - self.pairwise_support_matrix[opponent][candidate]}")
 
     def print_all_condorcet_cycles(self, smith=False):
         cycle_type = self.condorcet_cycle
@@ -585,7 +583,7 @@ class AllTypeElection:
         for path in cycle_type:
             print(str(len(path)) + "-cycle: ")
             for win in path:
-                print(Candidate.candidate_names[win[0]] + " beats " + Candidate.candidate_names[win[1]] + " by " + str(win[2]))
+                print(f"{Candidate.candidate_names[win[0]]} beats {Candidate.candidate_names[win[1]]} by {win[2]}")
             print("")
 
     def get_condorcet_winner(self):
@@ -593,4 +591,4 @@ class AllTypeElection:
 
     def print_support_per_candidate(self):
         for index, candidate in Candidate.candidate_names:
-            print(candidate, self.support_by_candidate[index])
+            print(f"{candidate} {self.support_by_candidate[index]}")

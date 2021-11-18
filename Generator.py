@@ -47,8 +47,8 @@ def generate_informed_vote_array(amount, candidate_list):
         y_list.pop(y)
         distance_list = []
         for candidate in candidate_list:
-            distance_list.append(((ideology[0] - candidate.ideology_array[0]) ** 2 + (ideology[1] - candidate.ideology_array()[1]) ** 2) ** (1 / 2))
-        support_list = [y.number for y in sorted([candidate_list[j] for j in range(len(Candidate.candidate_names)) if distance_list[j] <= 0.3], key=lambda x: distance_list[x.number()])]
+            distance_list.append(((ideology[0] - candidate.ideology_array[0]) ** 2 + (ideology[1] - candidate.ideology_array[1]) ** 2) ** (1 / 2))
+        support_list = [y.number for y in sorted([candidate_list[j] for j in range(Candidate.candidate_num) if distance_list[j] <= 0.3], key=lambda x: distance_list[x.number])]
         hated_candidate = max(range(len(distance_list)), key=distance_list.__getitem__)
         ret.append(Vote(support_list, hated_candidate, ideology))
 

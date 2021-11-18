@@ -25,13 +25,13 @@ class Candidate:
         return self.support < other.support
 
     def __str__(self):
-        return_string = self.name + "(" + str(self.index) + ") support: " + str(self.support) + " placement: " + str(self.placement)
+        return_string = f"{self.name} ({self.index}) support: {self.support} placement: {self.placement}"
         if not self.validity:
             return_string += " Invalid"
         return return_string
 
     def __repr__(self):
-        return str(self.index) + " [" + str(int(self.ideology[0] * 10 ** 3) / 10 ** 3) + ", " + str(int(self.ideology[1] * 10 ** 3) / 10 ** 3) + "]: " + str(self.support) + " (" + str(self.placement) + ")"
+        return f"{self.index} [{int(self.ideology[0] * 10 ** 3) / 10 ** 3}, {int(self.ideology[1] * 10 ** 3) / 10 ** 3}]: {self.support} ({self.placement})"
 
 # region properties
     @property
@@ -105,7 +105,7 @@ class Vote:
             self.hated_candidate = hated_candidate
 
     def __repr__(self):
-        return str(self.ideology) + ": " + str(self.support_arr) + " (" + str(self.hated_candidate) + ")"
+        return f"{self.ideology}:  {self.support_arr} ({self.hated_candidate})"
 
 # region properties
     @property
